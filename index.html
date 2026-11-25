@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="gu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ovaro Chula Chicken — Menu · ઓવારો ચૂલા ચિકન</title>
+<meta name="description" content="Menu — Ovaro Chula Chicken, below the Bullet Train Bridge, Dharagiri, Navsari">
+<meta name="theme-color" content="#E0412B">
+<style>
+  :root { --tomato:#E0412B; --espresso:#2A1A14; --butter:#FBE7B5; --paper:#FCF3DF; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--espresso); color:var(--butter); font-family: system-ui, -apple-system, "Noto Sans Gujarati", sans-serif; }
+  header { background:var(--tomato); padding:14px 16px; text-align:center; position:sticky; top:0; z-index:2; }
+  header h1 { margin:0; font-size:22px; line-height:1.3; color:var(--butter); font-weight:800; }
+  header p { margin:2px 0 0; font-size:12px; letter-spacing:.12em; color:var(--espresso); font-weight:700; }
+  main { max-width:900px; margin:0 auto; padding:12px 10px 110px; display:flex; flex-direction:column; gap:12px; }
+  canvas { width:100%; height:auto; display:block; background:var(--paper); border-radius:6px; }
+  .status { text-align:center; padding:40px 10px; color:var(--butter); opacity:.8; }
+  .bar { position:fixed; left:0; right:0; bottom:0; display:flex; gap:10px; padding:12px; background:rgba(42,26,20,.96); justify-content:center; }
+  .bar a { flex:1; max-width:260px; text-align:center; padding:13px 10px; border-radius:40px; font-weight:700; text-decoration:none; font-size:15px; }
+  .call { background:var(--tomato); color:var(--butter); }
+  .dl { background:var(--butter); color:var(--espresso); }
+</style>
+</head>
+<body>
+<header>
+  <h1>ઓવારો ચૂલા ચિકન</h1>
+  <p>OVARO CHULA CHICKEN · MENU</p>
+</header>
+<main id="pages"><div class="status" id="status">મેનુ ખુલી રહ્યું છે… Loading menu…</div></main>
+<div class="bar">
+  <a class="call" href="tel:+919898831188">📞 ફોન કરો · Call</a>
+  <a class="dl" id="dl" href="menu.pdf" download>⬇ PDF</a>
+</div>
+<script type="module">
+  // The only file to change when the menu changes is menu.pdf — this page always shows the latest one.
+  const url = 'menu.pdf?v=' + Date.now();   // bypass stale phone caches
+  const status = document.getElementById('status');
+  try {
+    const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+    const pdf = await pdfjs.getDocument(url).promise;
+    status.remove();
+    const main = document.getElementById('pages');
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page = await pdf.getPage(n);
+      const cssWidth = Math.min(main.clientWidth, 900);
+      const base = page.getViewport({ scale: 1 });
+      const scale = (cssWidth / base.width) * Math.min(window.devicePixelRatio || 1, 3);
+      const vp = page.getViewport({ scale });
+      const c = document.createElement('canvas');
+      c.width = vp.width; c.height = vp.height;
+      c.setAttribute('aria-label', 'Menu page ' + n);
+      main.appendChild(c);
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    }
+  } catch (e) {
+    console.error(e);
+    status.innerHTML = 'મેનુ ખોલવા <a href="menu.pdf" style="color:#FBE7B5">અહીં ટેપ કરો</a> · <a href="menu.pdf" style="color:#FBE7B5">Open the menu PDF</a>';
+  }
+</script>
+</body>
+</html>
